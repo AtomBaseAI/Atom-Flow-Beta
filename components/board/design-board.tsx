@@ -31,10 +31,11 @@ import {
   TextNode,
   IconNode,
   TagNode,
+  LineNode,
 } from "./nodes"
 import SmartEdge from "./edges/smart-edge"
 import BoardShortcuts from "./board-shortcuts"
-import { Download, Trash2 } from "lucide-react"
+import { Download, Trash2, Type, TagIcon, Hand } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,8 +47,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 
-type Tool = "select" | "rect" | "ellipse" | "text" | "hand" | "tag"
+type Tool = "select" | "rect" | "ellipse" | "text" | "hand" | "tag" | "line"
 
 export type ShapeData = {
   label?: string
@@ -60,6 +62,7 @@ export type ShapeData = {
   borderStyle?: "solid" | "dashed"
   borderWidth?: number
   iconSrc?: string
+  rotation?: number
 }
 
 const initialNodes: Node<ShapeData>[] = [
@@ -93,6 +96,7 @@ const nodeTypes: NodeTypes = {
   text: TextNode,
   icon: IconNode,
   tag: TagNode,
+  line: LineNode as any,
 }
 
 function BoardInner() {
@@ -111,6 +115,8 @@ function BoardInner() {
   const [exportTitle, setExportTitle] = useState("diagram")
   const [exportType, setExportType] = useState<"png" | "svg" | "json">("png")
 
+  const [ctxPoint, setCtxPoint] = useState<{ x: number; y: number } | null>(null)
+
   const getBoardScreenCenter = useCallback(() => {
     const el = boardRef.current
     if (el) {
@@ -124,23 +130,43 @@ function BoardInner() {
   }, [])
 
   const quickAdd = useCallback(
-    (t: "rect" | "ellipse" | "text" | "tag") => {
+    (t: "rect" | "ellipse" | "text" | "tag" | "line") => {
       const pos = rf.screenToFlowPosition(getBoardScreenCenter())
       const id = `n-${Date.now()}`
-      const nodeType = t === "rect" ? "rectangle" : t === "ellipse" ? "ellipse" : t === "text" ? "text" : "tag"
+      const nodeType =
+        t === "rect"
+          ? "rectangle"
+          : t === "ellipse"
+            ? "ellipse"
+            : t === "text"
+              ? "text"
+              : t === "tag"
+                ? "tag"
+                : t === "line"
+                  ? "line"
+                  : "rectangle"
+
       const data: ShapeData = {
-        label: t === "text" ? "Text" : "", // was "", now "Text" for text nodes
-        fill: t === "text" ? "transparent" : t === "tag" ? "#e5e7eb" : "#000000",
+        label: t === "text" ? "Text" : "",
+        fill: t === "text" ? "transparent" : t === "tag" ? "#e5e7eb" : t === "line" ? "transparent" : "#000000",
         fontColor: t === "tag" ? "#111111" : "#ffffff",
         fontSize: 8,
         fontWeight: t === "tag" ? 600 : 400,
         align: t === "text" ? "left" : "center",
         borderColor: "#a3a3a3",
         borderStyle: "solid",
-        borderWidth: 1,
+        borderWidth: t === "line" ? 2 : 1,
       }
+
       const style =
-        t === "text" ? { width: 120, height: 28 } : t === "tag" ? { width: 96, height: 28 } : { width: 140, height: 56 }
+        t === "text"
+          ? { width: 120, height: 28 }
+          : t === "tag"
+            ? { width: 96, height: 28 }
+            : t === "line"
+              ? { width: 140, height: 4 }
+              : { width: 140, height: 56 }
+
       const newNode: Node<ShapeData> = { id, type: nodeType as any, position: pos, data, style }
       setNodes((nds) => nds.concat(newNode))
       setSelectedNodeId(id)
@@ -200,29 +226,49 @@ function BoardInner() {
     (evt: React.MouseEvent) => {
       const pos = rf.screenToFlowPosition({ x: evt.clientX, y: evt.clientY })
 
-      if (tool === "rect" || tool === "ellipse" || tool === "text" || tool === "tag") {
+      if (tool === "rect" || tool === "ellipse" || tool === "text" || tool === "tag" || tool === "line") {
         const id = `n-${Date.now()}`
         const base: Node<ShapeData> = {
           id,
           position: pos,
           data: {
-            label: tool === "text" ? "Text" : "", // was always ""
-            fill: tool === "text" ? "transparent" : tool === "tag" ? "#e5e7eb" : "#000000",
+            label: tool === "text" ? "Text" : "",
+            fill:
+              tool === "text"
+                ? "transparent"
+                : tool === "tag"
+                  ? "#e5e7eb"
+                  : tool === "line"
+                    ? "transparent"
+                    : "#000000",
             fontColor: tool === "tag" ? "#111111" : "#ffffff",
             fontSize: 8,
             fontWeight: tool === "tag" ? 600 : 400,
             align: tool === "text" ? "left" : "center",
             borderColor: "#a3a3a3",
             borderStyle: "solid",
-            borderWidth: 1,
+            borderWidth: tool === "line" ? 2 : 1,
           },
           style:
             tool === "text"
               ? { width: 120, height: 28 }
               : tool === "tag"
                 ? { width: 96, height: 28 }
-                : { width: 140, height: 56 },
-          type: tool === "rect" ? "rectangle" : tool === "ellipse" ? "ellipse" : tool === "text" ? "text" : "tag",
+                : tool === "line"
+                  ? { width: 140, height: 4 }
+                  : { width: 140, height: 56 },
+          type:
+            tool === "rect"
+              ? "rectangle"
+              : tool === "ellipse"
+                ? "ellipse"
+                : tool === "text"
+                  ? "text"
+                  : tool === "tag"
+                    ? "tag"
+                    : tool === "line"
+                      ? "line"
+                      : "rectangle",
         }
         setNodes((nds) => nds.concat(base))
         setSelectedNodeId(id)
@@ -233,6 +279,40 @@ function BoardInner() {
       setSelectedEdgeId(null)
     },
     [rf, tool, setNodes],
+  )
+
+  const handlePaneDoubleClick = useCallback(
+    (evt: React.MouseEvent) => {
+      const pos = rf.screenToFlowPosition({ x: evt.clientX, y: evt.clientY })
+      const id = `n-${Date.now()}`
+      const newTextNode: Node<ShapeData> = {
+        id,
+        type: "text",
+        position: pos,
+        data: {
+          label: "Text",
+          fill: "transparent",
+          fontColor: "#ffffff",
+          fontSize: 8,
+          fontWeight: 400,
+          align: "left",
+          borderColor: "#a3a3a3",
+          borderStyle: "solid",
+          borderWidth: 1,
+        },
+        style: { width: 120, height: 28 },
+      }
+
+      // Commit history before mutation to align with edge creation behavior
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("board:commit"))
+      }
+
+      setNodes((nds) => nds.concat(newTextNode))
+      setSelectedNodeId(id)
+      setTool("select")
+    },
+    [rf, setNodes],
   )
 
   const onSelectionChange = useCallback(
@@ -357,6 +437,51 @@ function BoardInner() {
     }
   }, [exportType, exportTitle, nodes, edges, rf])
 
+  const addNodeAt = useCallback(
+    (nodeType: "text" | "tag", screenPos: { x: number; y: number }) => {
+      const pos = rf.screenToFlowPosition(screenPos)
+      const id = `n-${Date.now()}`
+      const base: Node<ShapeData> = {
+        id,
+        position: pos,
+        type: nodeType,
+        data:
+          nodeType === "text"
+            ? {
+                label: "Text",
+                fill: "transparent",
+                fontColor: "#ffffff",
+                fontSize: 8,
+                fontWeight: 400,
+                align: "left",
+                borderColor: "#a3a3a3",
+                borderStyle: "solid",
+                borderWidth: 1,
+              }
+            : {
+                label: "tag",
+                fill: "#e5e7eb",
+                fontColor: "#111111",
+                fontSize: 8,
+                fontWeight: 600,
+                align: "center",
+                borderColor: "#a3a3a3",
+                borderStyle: "solid",
+                borderWidth: 1,
+              },
+        style: nodeType === "text" ? { width: 120, height: 28 } : { width: 96, height: 28 },
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("board:commit"))
+      }
+      setNodes((nds) => nds.concat(base))
+      setSelectedNodeId(id)
+      setTool("select")
+    },
+    [rf, setNodes],
+  )
+
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden">
       <LeftToolbar
@@ -460,51 +585,87 @@ function BoardInner() {
         </button>
       </div>
 
-      <div
-        ref={boardRef}
-        className="absolute inset-0 overflow-hidden"
-        style={{ contain: "layout paint size" as React.CSSProperties["contain"] }}
-      >
-        <ReactFlow
-          className="h-full w-full"
-          proOptions={useMemo(() => ({ hideAttribution: true }), [])}
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={handleEdgesChange}
-          onConnect={onConnect}
-          onConnectStart={onConnectStart}
-          onConnectEnd={onConnectEnd}
-          nodeTypes={nodeTypes}
-          edgeTypes={useMemo(() => ({ smart: SmartEdge }), [])}
-          onPaneClick={handlePaneClick}
-          onSelectionChange={onSelectionChange}
-          onEdgesDelete={(deleted) => {
-            if (deleted.some((e) => e.id === selectedEdgeId)) setSelectedEdgeId(null)
-          }}
-          onNodesDelete={(deleted) => {
-            if (deleted.some((n) => n.id === selectedNodeId)) setSelectedNodeId(null)
-          }}
-          selectionOnDrag={tool === "select"}
-          panOnDrag={tool === "hand"}
-          defaultEdgeOptions={{
-            type: "smart",
-            style: { stroke: "#a3a3a3", strokeWidth: 1 },
-            markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: "#a3a3a3" },
-          }}
-          elevateNodesOnSelect={false}
-          connectionMode="loose"
-          isValidConnection={useCallback(
-            (conn: Connection) => !!conn.source && !!conn.target && conn.source !== conn.target,
-            [],
-          )}
-          connectionRadius={24}
-        >
-          <Background color="#2a2a2a" variant="dots" gap={24} size={1} />
-          <Controls position="bottom-right" className="!bg-zinc-900 !text-white" />
-          <BoardShortcuts />
-        </ReactFlow>
-      </div>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div
+            ref={boardRef}
+            className="absolute inset-0 overflow-hidden"
+            style={{ contain: "layout paint size" as React.CSSProperties["contain"] }}
+            onContextMenu={(e) => {
+              // capture screen coordinates for adding nodes from context menu
+              setCtxPoint({ x: e.clientX, y: e.clientY })
+            }}
+          >
+            <ReactFlow
+              className="h-full w-full"
+              proOptions={useMemo(() => ({ hideAttribution: true }), [])}
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={handleEdgesChange}
+              onConnect={onConnect}
+              onConnectStart={onConnectStart}
+              onConnectEnd={onConnectEnd}
+              nodeTypes={nodeTypes}
+              edgeTypes={useMemo(() => ({ smart: SmartEdge }), [])}
+              onPaneClick={handlePaneClick}
+              onPaneDoubleClick={handlePaneDoubleClick}
+              onSelectionChange={onSelectionChange}
+              onEdgesDelete={(deleted) => {
+                if (deleted.some((e) => e.id === selectedEdgeId)) setSelectedEdgeId(null)
+              }}
+              onNodesDelete={(deleted) => {
+                if (deleted.some((n) => n.id === selectedNodeId)) setSelectedNodeId(null)
+              }}
+              selectionOnDrag={tool === "select"}
+              panOnDrag={tool === "hand"}
+              defaultEdgeOptions={{
+                type: "smart",
+                style: { stroke: "#a3a3a3", strokeWidth: 1 },
+                markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: "#a3a3a3" },
+              }}
+              elevateNodesOnSelect={false}
+              connectionMode="loose"
+              isValidConnection={useCallback(
+                (conn: Connection) => !!conn.source && !!conn.target && conn.source !== conn.target,
+                [],
+              )}
+              connectionRadius={24}
+            >
+              <Background color="#2a2a2a" variant="dots" gap={24} size={1} />
+              <Controls position="bottom-right" className="!bg-zinc-900 !text-white" />
+              <BoardShortcuts />
+            </ReactFlow>
+          </div>
+        </ContextMenuTrigger>
+
+        <ContextMenuContent className="bg-zinc-900 text-zinc-100 border border-zinc-800 shadow-lg">
+          <ContextMenuItem
+            onSelect={() => {
+              if (ctxPoint) addNodeAt("text", ctxPoint)
+            }}
+          >
+            <Type className="h-4 w-4 text-zinc-300" />
+            <span>Text</span>
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => {
+              if (ctxPoint) addNodeAt("tag", ctxPoint)
+            }}
+          >
+            <TagIcon className="h-4 w-4 text-zinc-300" />
+            <span>Tag</span>
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => {
+              setTool("hand")
+            }}
+          >
+            <Hand className="h-4 w-4 text-zinc-300" />
+            <span>Hand</span>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       {exportOpen && (
         <div
@@ -580,6 +741,7 @@ function BoardInner() {
         onEdgeColor={(color) => setSelectedEdgeStyle({ stroke: color })}
         onEdgeWidth={(w) => setSelectedEdgeStyle({ strokeWidth: w })}
         onEdgeAnimate={(animate) => setSelectedEdge({ animated: animate })}
+        onRotate={(deg) => updateSelectedNode({ rotation: deg })}
       />
     </div>
   )

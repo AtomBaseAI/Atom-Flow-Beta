@@ -2,7 +2,20 @@
 
 import React from "react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { MousePointer2, Square, Circle, Type, Hand, ZoomIn, ZoomOut, Undo2, Redo2, TagIcon, Plus } from "lucide-react"
+import {
+  MousePointer2,
+  Square,
+  Circle,
+  Type,
+  Hand,
+  ZoomIn,
+  ZoomOut,
+  Undo2,
+  Redo2,
+  TagIcon,
+  Plus,
+  Minus,
+} from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -17,7 +30,7 @@ import { cn } from "@/lib/utils"
 type Props = {
   active: "select" | "rect" | "ellipse" | "text" | "hand"
   onChangeTool: (t: Props["active"]) => void
-  onQuickAdd?: (t: "rect" | "ellipse" | "text") => void
+  onQuickAdd?: (t: "rect" | "ellipse" | "text" | "line") => void
   onZoomIn?: () => void
   onZoomOut?: () => void
   onOpenExport?: () => void // add export trigger
@@ -120,6 +133,11 @@ export default function LeftToolbar({
             label="Ellipse"
           >
             <Circle className="h-4 w-4" />
+          </ToolBtn>
+
+          {/* 4. Line */}
+          <ToolBtn onClick={() => (onQuickAdd ? onQuickAdd("line") : onChangeTool("select"))} label="Line">
+            <Minus className="h-4 w-4" />
           </ToolBtn>
 
           {/* spacer */}

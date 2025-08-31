@@ -150,6 +150,8 @@ export const RectangleNode = memo(function RectangleNode({ id, data, selected }:
       <div
         className="relative h-full w-full overflow-visible rounded-[2px]"
         style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
           background: fill,
           borderColor,
           borderStyle: data.borderStyle || "solid",
@@ -181,6 +183,8 @@ export const EllipseNode = memo(function EllipseNode({ id, data, selected }: Nod
       <div
         className="relative h-full w-full overflow-visible rounded-full"
         style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
           background: fill,
           borderColor,
           borderStyle: data.borderStyle || "solid",
@@ -209,17 +213,25 @@ export const TriangleNode = memo(function TriangleNode({ id, data, selected }: N
         minHeight={28}
         lineStyle={{ strokeWidth: 1 }}
       />
-      <svg className="h-full w-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polygon
-          points="50,0 100,100 0,100"
-          fill={fill}
-          stroke={borderColor}
-          strokeWidth={data.borderWidth ?? 1}
-          strokeDasharray={data.borderStyle === "dashed" ? "6 6" : undefined}
-        />
-      </svg>
-      <EditableLabel id={id} data={data} align="center" onEditingChange={setIsEditing} />
-      <Handles visible={!!selected && !isEditing} />
+      <div
+        className="relative h-full w-full overflow-visible"
+        style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
+        }}
+      >
+        <svg className="h-full w-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polygon
+            points="50,0 100,100 0,100"
+            fill={fill}
+            stroke={borderColor}
+            strokeWidth={data.borderWidth ?? 1}
+            strokeDasharray={data.borderStyle === "dashed" ? "6 6" : undefined}
+          />
+        </svg>
+        <EditableLabel id={id} data={data} align="center" onEditingChange={setIsEditing} />
+        <Handles visible={!!selected && !isEditing} />
+      </div>
     </div>
   )
 })
@@ -238,17 +250,25 @@ export const DiamondNode = memo(function DiamondNode({ id, data, selected }: Nod
         minHeight={28}
         lineStyle={{ strokeWidth: 1 }}
       />
-      <svg className="h-full w-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polygon
-          points="50,0 100,50 50,100 0,50"
-          fill={fill}
-          stroke={borderColor}
-          strokeWidth={data.borderWidth ?? 1}
-          strokeDasharray={data.borderStyle === "dashed" ? "6 6" : undefined}
-        />
-      </svg>
-      <EditableLabel id={id} data={data} align="center" onEditingChange={setIsEditing} />
-      <Handles visible={!!selected && !isEditing} />
+      <div
+        className="relative h-full w-full overflow-visible"
+        style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
+        }}
+      >
+        <svg className="h-full w-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polygon
+            points="50,0 100,50 50,100 0,50"
+            fill={fill}
+            stroke={borderColor}
+            strokeWidth={data.borderWidth ?? 1}
+            strokeDasharray={data.borderStyle === "dashed" ? "6 6" : undefined}
+          />
+        </svg>
+        <EditableLabel id={id} data={data} align="center" onEditingChange={setIsEditing} />
+        <Handles visible={!!selected && !isEditing} />
+      </div>
     </div>
   )
 })
@@ -267,17 +287,25 @@ export const HexagonNode = memo(function HexagonNode({ id, data, selected }: Nod
         minHeight={28}
         lineStyle={{ strokeWidth: 1 }}
       />
-      <svg className="h-full w-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polygon
-          points="25,0 75,0 100,50 75,100 25,100 0,50"
-          fill={fill}
-          stroke={borderColor}
-          strokeWidth={data.borderWidth ?? 1}
-          strokeDasharray={data.borderStyle === "dashed" ? "6 6" : undefined}
-        />
-      </svg>
-      <EditableLabel id={id} data={data} align="center" onEditingChange={setIsEditing} />
-      <Handles visible={!!selected && !isEditing} />
+      <div
+        className="relative h-full w-full overflow-visible"
+        style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
+        }}
+      >
+        <svg className="h-full w-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polygon
+            points="25,0 75,0 100,50 75,100 25,100 0,50"
+            fill={fill}
+            stroke={borderColor}
+            strokeWidth={data.borderWidth ?? 1}
+            strokeDasharray={data.borderStyle === "dashed" ? "6 6" : undefined}
+          />
+        </svg>
+        <EditableLabel id={id} data={data} align="center" onEditingChange={setIsEditing} />
+        <Handles visible={!!selected && !isEditing} />
+      </div>
     </div>
   )
 })
@@ -295,7 +323,13 @@ export const TextNode = memo(function TextNode({ id, data, selected }: NodeProps
         minHeight={24}
         lineStyle={{ strokeWidth: 1 }}
       />
-      <div className="relative h-full w-full overflow-visible rounded-[2px] border border-transparent bg-transparent">
+      <div
+        className="relative h-full w-full overflow-visible rounded-[2px] border border-transparent bg-transparent"
+        style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
+        }}
+      >
         <EditableLabel id={id} data={data} align={data.align ?? "left"} onEditingChange={setIsEditing} />
         <Handles visible={!!selected && !isEditing} />
       </div>
@@ -321,6 +355,8 @@ export const IconNode = memo(function IconNode({ id, data, selected }: NodeProps
       <div
         className="relative flex h-full w-full flex-col overflow-hidden rounded-[2px]"
         style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
           background: fill,
           borderColor,
           borderStyle: data.borderStyle || "solid",
@@ -354,7 +390,7 @@ export const IconNode = memo(function IconNode({ id, data, selected }: NodeProps
 
 export const TagNode = memo(function TagNode({ id, data, selected }: NodeProps<ShapeData>) {
   const [isEditing, setIsEditing] = useState(false)
-  const fill = data.fill ?? "#e5e7eb" // gray background by default
+  const fill = data.fill ?? "#e5e7eb"
   const borderColor = data.borderColor || "#a3a3a3"
 
   return (
@@ -369,6 +405,8 @@ export const TagNode = memo(function TagNode({ id, data, selected }: NodeProps<S
       <div
         className="relative h-full w-full overflow-visible rounded-full"
         style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
           background: fill,
           borderColor,
           borderStyle: data.borderStyle || "solid",
@@ -382,6 +420,32 @@ export const TagNode = memo(function TagNode({ id, data, selected }: NodeProps<S
           align={data.align ?? "center"}
           onEditingChange={setIsEditing}
         />
+      </div>
+    </div>
+  )
+})
+
+export const LineNode = memo(function LineNode({ data, selected }: NodeProps<ShapeData>) {
+  const borderColor = data.borderColor || "#a3a3a3"
+  const borderStyle = data.borderStyle || "solid"
+  const borderWidth = data.borderWidth ?? 2
+
+  return (
+    <div className="group relative h-full w-full p-[3px]">
+      <NodeResizer isVisible={selected} color="#22d3ee" minWidth={40} minHeight={4} lineStyle={{ strokeWidth: 1 }} />
+      <div
+        className="relative h-full w-full overflow-visible"
+        style={{
+          transform: `rotate(${data.rotation ?? 0}deg)`,
+          transformOrigin: "center",
+          borderTopColor: borderColor,
+          borderTopStyle: borderStyle as any,
+          borderTopWidth: borderWidth,
+          boxSizing: "border-box",
+          background: "transparent",
+        }}
+      >
+        {/* No Handles for line node */}
       </div>
     </div>
   )

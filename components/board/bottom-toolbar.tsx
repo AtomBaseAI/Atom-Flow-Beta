@@ -10,6 +10,7 @@ import {
   Bold,
   FolderPlus as BorderAll,
   LucideArchive as BezierCurve,
+  RotateCw,
 } from "lucide-react"
 
 type Props = {
@@ -32,6 +33,8 @@ type Props = {
   onEdgeColor: (color: string) => void
   onEdgeWidth: (w: number) => void
   onEdgeAnimate: (animate: boolean) => void
+
+  onRotate: (deg: number) => void // added
 }
 
 export default function BottomToolbar({
@@ -51,8 +54,10 @@ export default function BottomToolbar({
   onEdgeColor,
   onEdgeWidth,
   onEdgeAnimate,
+  onRotate,
 }: Props) {
-  const [open, setOpen] = useState<null | "shapes" | "bg" | "border" | "textSize" | "typo" | "edge">(null)
+  const [open, setOpen] = useState<null | "shapes" | "bg" | "border" | "textSize" | "typo" | "edge" | "rotate">(null) // added rotate
+  const [deg, setDeg] = useState(0) // local display state for rotation
 
   const swatches = [
     { name: "Black", value: "#000000" },
@@ -120,6 +125,18 @@ export default function BottomToolbar({
             title="Typography"
           >
             Aa
+          </button>
+
+          {/* New: Rotate */}
+          <button
+            className="rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 disabled:opacity-40"
+            onClick={() => setOpen(open === "rotate" ? null : "rotate")}
+            disabled={!isNodeSelected}
+            title="Rotate"
+          >
+            <span className="inline-flex items-center gap-1">
+              <RotateCw className="h-4 w-4 text-teal-400" /> Rotate
+            </span>
           </button>
 
           <button
@@ -340,6 +357,64 @@ export default function BottomToolbar({
             >
               Off
             </button>
+          </div>
+        )}
+
+        {open === "rotate" && isNodeSelected && (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-zinc-300">Angle</span>
+            <input
+              type="range"
+              min={0}
+              max={360}
+              step={1}
+              value={deg}
+              onChange={(e) => {
+                const v = Number.parseInt(e.target.value, 10)
+                setDeg(v)
+                onRotate(v)
+              }}
+              className="w-40"
+              aria-label="Rotate angle"
+              title={`${deg}°`}
+            />
+            <input
+              type="number"
+              min={0}
+              max={360}
+              value={deg}
+              onChange={(e) => {
+                const v = Math.max(0, Math.min(360, Number.parseInt(e.target.value || "0", 10)))
+                setDeg(v)
+                onRotate(v)
+              }}
+              className="w-16 rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs text-zinc-200"
+              aria-label="Rotate degrees"
+            />
+            <button
+              onClick={() => {
+                setDeg(0)
+                onRotate(0)
+              }}
+              className="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs text-zinc-200"
+              title="Reset rotation"
+            >
+              0°
+            </button>
+            {[15, 45, 90].map((inc) => (
+              <button
+                key={inc}
+                onClick={() => {
+                  const next = (deg + inc) % 360
+                  setDeg(next)
+                  onRotate(next)
+                }}
+                className="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs text-zinc-200"
+                title={`Rotate +${inc}°`}
+              >
+                +{inc}°
+              </button>
+            ))}
           </div>
         )}
       </div>
