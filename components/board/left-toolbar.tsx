@@ -16,6 +16,7 @@ import {
   Trash2,
   ImageIcon,
   TagIcon,
+  Plus
 } from "lucide-react"
 import {
   AlertDialog,
@@ -121,7 +122,7 @@ export default function LeftToolbar({
       <div className="pointer-events-auto absolute left-4 top-1/2 z-20 -translate-y-1/2">
         <div className="flex w-12 flex-col items-center gap-2">
           <ToolBtn onClick={() => setIconOpen(true)} label="Add Icon">
-            <ImageIcon className="h-5 w-5" />
+            <Plus className="h-5 w-5" />
           </ToolBtn>
 
           {/* 1. Selection */}
