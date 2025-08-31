@@ -1,4 +1,4 @@
-export const ICON_CATEGORIES = ["all", "lang", "framework", "testing","browser", "database","files", "cloud", "tech", "aws"] as const
+export const ICON_CATEGORIES = ["all", "lang", "framework", "testing","browser", "database","files", "cloud","os", "tech", "aws"] as const
 
 // Keep filenames in sync with /public/vectors structure.
 // You can add more here later without changing any code.
@@ -88,6 +88,18 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
    "lightroom",
    "premiere",
    "xd" 
+  ],
+  os:[
+      "ubuntu",
+      "centos",
+      "debian",
+      "fedora",
+      "kalilinux",
+      "linux-mint",
+      "android",
+      "windows",
+      "ios",
+      "macos"
   ],
   tech: [
     "api",
