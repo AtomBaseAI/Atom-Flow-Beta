@@ -117,7 +117,10 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
     "web"
 
   ],
-  aws: ["ebs",
+  aws: [
+    "ebs",
     "ec2",
-    "lambda"],
+    "lambda",
+    "lightsail"
+  ],
 }
