@@ -100,17 +100,25 @@ function BoardInner() {
   const [exportTitle, setExportTitle] = useState("diagram")
   const [exportType, setExportType] = useState<"png" | "svg" | "json">("png")
 
+  const getBoardScreenCenter = useCallback(() => {
+    const el = boardRef.current
+    if (el) {
+      const r = el.getBoundingClientRect()
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+    }
+    return {
+      x: typeof window !== "undefined" ? window.innerWidth / 2 : 400,
+      y: typeof window !== "undefined" ? window.innerHeight / 2 : 300,
+    }
+  }, [])
+
   const quickAdd = useCallback(
     (t: "rect" | "ellipse" | "text" | "tag") => {
-      const center = {
-        x: typeof window !== "undefined" ? window.innerWidth / 2 : 400,
-        y: typeof window !== "undefined" ? window.innerHeight / 2 : 300,
-      }
-      const pos = rf.screenToFlowPosition(center)
+      const pos = rf.screenToFlowPosition(getBoardScreenCenter())
       const id = `n-${Date.now()}`
       const nodeType = t === "rect" ? "rectangle" : t === "ellipse" ? "ellipse" : t === "text" ? "text" : "tag"
       const data: ShapeData = {
-        label: "",
+        label: t === "text" ? "Text" : "", // was "", now "Text" for text nodes
         fill: t === "text" ? "transparent" : t === "tag" ? "#e5e7eb" : "#000000",
         fontColor: t === "tag" ? "#111111" : "#ffffff",
         fontSize: 8,
@@ -127,7 +135,7 @@ function BoardInner() {
       setSelectedNodeId(id)
       setTool("select")
     },
-    [rf, setNodes],
+    [rf, setNodes, getBoardScreenCenter],
   )
 
   const onConnect = useCallback(
@@ -183,7 +191,7 @@ function BoardInner() {
           id,
           position: pos,
           data: {
-            label: "",
+            label: tool === "text" ? "Text" : "", // was always ""
             fill: tool === "text" ? "transparent" : tool === "tag" ? "#e5e7eb" : "#000000",
             fontColor: tool === "tag" ? "#111111" : "#ffffff",
             fontSize: 8,
@@ -394,11 +402,7 @@ function BoardInner() {
 
   const onAddIcon = useCallback(
     ({ src, label }: { src: string; label: string }) => {
-      const center = {
-        x: typeof window !== "undefined" ? window.innerWidth / 2 : 400,
-        y: typeof window !== "undefined" ? window.innerHeight / 2 : 300,
-      }
-      const pos = rf.screenToFlowPosition(center)
+      const pos = rf.screenToFlowPosition(getBoardScreenCenter())
       const id = `n-${Date.now()}`
       const newNode: Node<ShapeData> = {
         id,
@@ -422,15 +426,11 @@ function BoardInner() {
       setSelectedNodeId(id)
       setTool("select")
     },
-    [rf, setNodes],
+    [rf, setNodes, getBoardScreenCenter],
   )
 
   const onAddTag = useCallback(() => {
-    const center = {
-      x: typeof window !== "undefined" ? window.innerWidth / 2 : 400,
-      y: typeof window !== "undefined" ? window.innerHeight / 2 : 300,
-    }
-    const pos = rf.screenToFlowPosition(center)
+    const pos = rf.screenToFlowPosition(getBoardScreenCenter())
     const id = `n-${Date.now()}`
     const newNode: Node<ShapeData> = {
       id,
@@ -452,7 +452,7 @@ function BoardInner() {
     setNodes((nds) => nds.concat(newNode))
     setSelectedNodeId(id)
     setTool("select")
-  }, [rf, setNodes])
+  }, [rf, setNodes, getBoardScreenCenter])
 
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden">
