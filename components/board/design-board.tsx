@@ -2,7 +2,7 @@
 
 import type React from "react"
 import * as htmlToImage from "html-to-image"
-import { useCallback, useMemo, useRef, useState, useEffect } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -16,7 +16,6 @@ import {
   type Edge,
   type Connection,
   type NodeTypes,
-  type EdgeTypes,
   MarkerType,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
@@ -164,6 +163,10 @@ function BoardInner() {
       const srcNode = src ? rf.getNode(src) : null
       const srcZ = srcNode?.zIndex ?? 0
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("board:commit"))
+      }
+
       setEdges((eds) =>
         addEdge(
           {
@@ -259,6 +262,9 @@ function BoardInner() {
   const setSelectedEdge = useCallback(
     (patch: Partial<Edge>) => {
       if (!selectedEdgeId) return
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("board:commit"))
+      }
       setEdges((eds) => eds.map((e) => (e.id === selectedEdgeId ? { ...e, ...patch } : e)))
     },
     [selectedEdgeId, setEdges],
@@ -267,6 +273,9 @@ function BoardInner() {
   const setSelectedEdgeStyle = useCallback(
     (stylePatch: React.CSSProperties) => {
       if (!selectedEdgeId) return
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("board:commit"))
+      }
       setEdges((eds) =>
         eds.map((e) => (e.id === selectedEdgeId ? { ...e, style: { ...(e.style || {}), ...stylePatch } } : e)),
       )
@@ -274,7 +283,21 @@ function BoardInner() {
     [selectedEdgeId, setEdges],
   )
 
-  const doExport = useCallback(async () => {
+  const handleEdgesChange = useCallback(
+    (changes: any) => {
+      const suppress = typeof window !== "undefined" && (window as any).__boardRestoring
+
+      if (!suppress && Array.isArray(changes) && changes.some((c) => c?.type === "remove")) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("board:commit"))
+        }
+      }
+      onEdgesChange(changes)
+    },
+    [onEdgesChange],
+  )
+
+  const exportDiagram = useCallback(async () => {
     try {
       if (exportType === "json") {
         const payload = {
@@ -334,149 +357,64 @@ function BoardInner() {
     }
   }, [exportType, exportTitle, nodes, edges, rf])
 
-  const proOptions = useMemo(() => ({ hideAttribution: true }), [])
-
-  const edgeTypes: EdgeTypes = useMemo(
-    () => ({
-      smart: SmartEdge,
-    }),
-    [],
-  )
-
-  const zoomIn = useCallback(() => {
-    ;(rf as any)?.zoomIn?.() ?? rf.setViewport({ ...rf.getViewport(), zoom: rf.getViewport().zoom * 1.1 })
-  }, [rf])
-  const zoomOut = useCallback(() => {
-    ;(rf as any)?.zoomOut?.() ?? rf.setViewport({ ...rf.getViewport(), zoom: rf.getViewport().zoom / 1.1 })
-  }, [rf])
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      try {
-        ;(rf as any)?.fitView?.({ duration: 0 })
-      } catch (_err) {
-        // ignore
-      }
-    })
-    return () => cancelAnimationFrame(id)
-  }, [rf])
-
-  useEffect(() => {
-    if (!nodes?.length) return
-    const idToNode = new Map(nodes.map((n) => [n.id, n] as const))
-    let changed = false
-    const updated = nodes.map((n, idx) => {
-      let depth = 0
-      let cursor: any = n
-      let guard = 0
-      while (cursor?.parentNode && guard++ < 64) {
-        depth += 1
-        cursor = idToNode.get(cursor.parentNode)
-        if (!cursor) break
-      }
-      const desired = depth * 100 + idx
-      if (n.zIndex !== desired) {
-        changed = true
-        return { ...n, zIndex: desired }
-      }
-      return n
-    })
-    if (changed) setNodes(updated)
-  }, [nodes, setNodes])
-
-  useEffect(() => {
-    if (!edges.length) return
-    const idToZ = new Map(nodes.map((n) => [n.id, n.zIndex ?? 0] as const))
-
-    let anyZChanged = false
-    const withZ = edges.map((e) => {
-      const srcZ = idToZ.get(e.source) ?? 0
-      if (e.zIndex !== srcZ) {
-        anyZChanged = true
-        return { ...e, zIndex: srcZ }
-      }
-      return e
-    })
-
-    // sort by zIndex ascending so highest zIndex render last (on top)
-    const sorted = [...withZ].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
-    const orderChanged = sorted.length === edges.length && sorted.some((e, i) => e.id !== edges[i].id)
-
-    if (anyZChanged || orderChanged) {
-      setEdges(sorted)
-    }
-  }, [nodes, edges, setEdges])
-
-  const isValidConnection = useCallback(
-    (conn: Connection) => !!conn.source && !!conn.target && conn.source !== conn.target,
-    [],
-  )
-
-  const onAddIcon = useCallback(
-    ({ src, label }: { src: string; label: string }) => {
-      const pos = rf.screenToFlowPosition(getBoardScreenCenter())
-      const id = `n-${Date.now()}`
-      const newNode: Node<ShapeData> = {
-        id,
-        type: "icon" as any,
-        position: pos,
-        data: {
-          label: label || "",
-          iconSrc: src,
-          fill: "#ffffff",
-          fontColor: "#000000",
-          fontSize: 8,
-          fontWeight: 700,
-          align: "center",
-          borderColor: "#a3a3a3",
-          borderStyle: "solid",
-          borderWidth: 1,
-        },
-        style: { width: 96, height: 96 },
-      }
-      setNodes((nds) => nds.concat(newNode))
-      setSelectedNodeId(id)
-      setTool("select")
-    },
-    [rf, setNodes, getBoardScreenCenter],
-  )
-
-  const onAddTag = useCallback(() => {
-    const pos = rf.screenToFlowPosition(getBoardScreenCenter())
-    const id = `n-${Date.now()}`
-    const newNode: Node<ShapeData> = {
-      id,
-      type: "tag" as any,
-      position: pos,
-      data: {
-        label: "tag",
-        fill: "#e5e7eb",
-        fontColor: "#111111",
-        fontSize: 8,
-        fontWeight: 600,
-        align: "center",
-        borderColor: "#a3a3a3",
-        borderStyle: "solid",
-        borderWidth: 1,
-      },
-      style: { width: 96, height: 28 },
-    }
-    setNodes((nds) => nds.concat(newNode))
-    setSelectedNodeId(id)
-    setTool("select")
-  }, [rf, setNodes, getBoardScreenCenter])
-
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden">
       <LeftToolbar
         active={tool}
         onChangeTool={setTool}
         onQuickAdd={quickAdd}
-        onZoomIn={zoomIn}
-        onZoomOut={zoomOut}
+        onZoomIn={() => rf.zoomIn?.() ?? rf.setViewport({ ...rf.getViewport(), zoom: rf.getViewport().zoom * 1.1 })}
+        onZoomOut={() => rf.zoomOut?.() ?? rf.setViewport({ ...rf.getViewport(), zoom: rf.getViewport().zoom / 1.1 })}
         onOpenExport={() => setExportOpen(true)}
-        onAddIcon={onAddIcon}
-        onAddTag={onAddTag}
+        onAddIcon={(data) => {
+          const pos = rf.screenToFlowPosition(getBoardScreenCenter())
+          const id = `n-${Date.now()}`
+          const newNode: Node<ShapeData> = {
+            id,
+            type: "icon" as any,
+            position: pos,
+            data: {
+              label: data.label || "",
+              iconSrc: data.src,
+              fill: "#ffffff",
+              fontColor: "#000000",
+              fontSize: 8,
+              fontWeight: 700,
+              align: "center",
+              borderColor: "#a3a3a3",
+              borderStyle: "solid",
+              borderWidth: 1,
+            },
+            style: { width: 96, height: 96 },
+          }
+          setNodes((nds) => nds.concat(newNode))
+          setSelectedNodeId(id)
+          setTool("select")
+        }}
+        onAddTag={() => {
+          const pos = rf.screenToFlowPosition(getBoardScreenCenter())
+          const id = `n-${Date.now()}`
+          const newNode: Node<ShapeData> = {
+            id,
+            type: "tag" as any,
+            position: pos,
+            data: {
+              label: "tag",
+              fill: "#e5e7eb",
+              fontColor: "#111111",
+              fontSize: 8,
+              fontWeight: 600,
+              align: "center",
+              borderColor: "#a3a3a3",
+              borderStyle: "solid",
+              borderWidth: 1,
+            },
+            style: { width: 96, height: 28 },
+          }
+          setNodes((nds) => nds.concat(newNode))
+          setSelectedNodeId(id)
+          setTool("select")
+        }}
       />
 
       <div className="pointer-events-auto absolute right-4 top-4 z-20 flex items-center gap-2">
@@ -488,6 +426,7 @@ function BoardInner() {
               title="Clear"
             >
               <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Clear</span>
             </button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -517,6 +456,7 @@ function BoardInner() {
           title="Export"
         >
           <Download className="h-4 w-4" />
+          <span className="hidden sm:inline">Export</span>
         </button>
       </div>
 
@@ -527,16 +467,16 @@ function BoardInner() {
       >
         <ReactFlow
           className="h-full w-full"
-          proOptions={proOptions}
+          proOptions={useMemo(() => ({ hideAttribution: true }), [])}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
+          onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           onConnectStart={onConnectStart}
           onConnectEnd={onConnectEnd}
           nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
+          edgeTypes={useMemo(() => ({ smart: SmartEdge }), [])}
           onPaneClick={handlePaneClick}
           onSelectionChange={onSelectionChange}
           onEdgesDelete={(deleted) => {
@@ -554,7 +494,10 @@ function BoardInner() {
           }}
           elevateNodesOnSelect={false}
           connectionMode="loose"
-          isValidConnection={isValidConnection}
+          isValidConnection={useCallback(
+            (conn: Connection) => !!conn.source && !!conn.target && conn.source !== conn.target,
+            [],
+          )}
           connectionRadius={24}
         >
           <Background color="#2a2a2a" variant="dots" gap={24} size={1} />
@@ -610,7 +553,7 @@ function BoardInner() {
                 Cancel
               </button>
               <button
-                onClick={doExport}
+                onClick={exportDiagram}
                 className="rounded-md border border-teal-600 bg-teal-600 px-3 py-1.5 text-xs text-white"
               >
                 Export

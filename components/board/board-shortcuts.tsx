@@ -40,6 +40,8 @@ export default function BoardShortcuts() {
 
   const historyPast = useRef<Snapshot[]>([])
   const historyFuture = useRef<Snapshot[]>([])
+  const pressedRef = useRef<Record<string, boolean>>({})
+  const restoringRef = useRef(false) // flag to indicate undo/redo is restoring state
 
   useOnSelectionChange({
     onChange: ({ nodes, edges }) => {
@@ -53,7 +55,21 @@ export default function BoardShortcuts() {
   })
 
   const commit = () => {
-    historyPast.current.push(takeSnapshot())
+    const cur = takeSnapshot()
+    const last = historyPast.current[historyPast.current.length - 1]
+    if (last) {
+      const sameCounts = last.nodes.length === cur.nodes.length && last.edges.length === cur.edges.length
+      if (sameCounts) {
+        const lastNodeIds = last.nodes.map((n) => n.id).join(",")
+        const curNodeIds = cur.nodes.map((n) => n.id).join(",")
+        const lastEdgeIds = last.edges.map((e) => e.id).join(",")
+        const curEdgeIds = cur.edges.map((e) => e.id).join(",")
+        if (lastNodeIds === curNodeIds && lastEdgeIds === curEdgeIds) {
+          return
+        }
+      }
+    }
+    historyPast.current.push(cur)
     historyFuture.current.length = 0
   }
 
@@ -65,8 +81,16 @@ export default function BoardShortcuts() {
     const current = takeSnapshot()
     const prev = historyPast.current.pop()!
     historyFuture.current.push(current)
+
+    restoringRef.current = true
+    ;(window as any).__boardRestoring = true
     rf.setNodes(prev.nodes)
     rf.setEdges(prev.edges)
+    // Release suppression after the frame so onEdgesChange can finish
+    requestAnimationFrame(() => {
+      restoringRef.current = false
+      ;(window as any).__boardRestoring = false
+    })
   }
 
   const redo = () => {
@@ -74,8 +98,15 @@ export default function BoardShortcuts() {
     const current = takeSnapshot()
     const next = historyFuture.current.pop()!
     historyPast.current.push(current)
+
+    restoringRef.current = true
+    ;(window as any).__boardRestoring = true
     rf.setNodes(next.nodes)
     rf.setEdges(next.edges)
+    requestAnimationFrame(() => {
+      restoringRef.current = false
+      ;(window as any).__boardRestoring = false
+    })
   }
 
   const onCopy = () => {
@@ -148,6 +179,14 @@ export default function BoardShortcuts() {
       const editing = isEditingText()
       if (editing) return
 
+      if (ctrlOrMeta && (key === "z" || key === "y" || key === "c" || key === "v")) {
+        if (pressedRef.current[key]) {
+          e.preventDefault()
+          return
+        }
+        pressedRef.current[key] = true
+      }
+
       // Undo / Redo
       if (ctrlOrMeta && key === "z") {
         e.preventDefault()
@@ -184,13 +223,18 @@ export default function BoardShortcuts() {
       }
     }
 
+    const onKeyUp = (e: KeyboardEvent) => {
+      const key = (e.key?.length === 1 ? e.key.toLowerCase() : e.key) as string
+      pressedRef.current[key] = false
+    }
+
     // Capture phase to avoid other handlers stopping propagation
     const opts: AddEventListenerOptions = { capture: true }
     window.addEventListener("keydown", handler, opts)
-    document.addEventListener("keydown", handler, opts)
+    window.addEventListener("keyup", onKeyUp, opts)
     return () => {
       window.removeEventListener("keydown", handler, opts)
-      document.removeEventListener("keydown", handler, opts)
+      window.removeEventListener("keyup", onKeyUp, opts)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected])
@@ -199,15 +243,18 @@ export default function BoardShortcuts() {
     const onUndo: EventListener = () => undo()
     const onRedo: EventListener = () => redo()
     const onClear: EventListener = () => clearAll()
+    const onCommit: EventListener = () => commit()
 
     window.addEventListener("board:undo", onUndo)
     window.addEventListener("board:redo", onRedo)
     window.addEventListener("board:clear", onClear)
+    window.addEventListener("board:commit", onCommit)
 
     return () => {
       window.removeEventListener("board:undo", onUndo)
       window.removeEventListener("board:redo", onRedo)
       window.removeEventListener("board:clear", onClear)
+      window.removeEventListener("board:commit", onCommit)
     }
   }, [])
 }
