@@ -47,15 +47,21 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
     "vercel"
   ],
   database: [
+    "cassandra",
+    "mariadb",
     "mongodb",
+    "ms-sql",
     "mysql",
     "postgresql",
+    "redis",
+    "sqlite"
   ],
   files:[
    "txt",
    "pdf",
    "jpg",
    "png",
+   "svg",
    "mp3",
    "mp4",
    "zip",
@@ -64,7 +70,6 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
    "csv",
    "figma",
    "excel",
-   "powerpoint",
    "ppt",
    "word",
    "photoshop",
