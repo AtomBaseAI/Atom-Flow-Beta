@@ -2,33 +2,7 @@
 
 import React from "react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import {
-  MousePointer2,
-  Square,
-  Circle,
-  Type,
-  Hand,
-  ZoomIn,
-  ZoomOut,
-  Download,
-  Undo2,
-  Redo2,
-  Trash2,
-  ImageIcon,
-  TagIcon,
-  Plus
-} from "lucide-react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { MousePointer2, Square, Circle, Type, Hand, ZoomIn, ZoomOut, Undo2, Redo2, TagIcon, Plus } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -69,7 +43,7 @@ function ToolBtn({
           aria-label={label}
           onClick={onClick}
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-200",
+            "flex h-9 w-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-200",
             "hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-teal-500",
             active && "border-teal-500 text-white",
           )}
@@ -120,14 +94,14 @@ export default function LeftToolbar({
       {" "}
       {/* Wrap the entire component in TooltipProvider */}
       <div className="pointer-events-auto absolute left-4 top-1/2 z-20 -translate-y-1/2">
-        <div className="flex w-12 flex-col items-center gap-2">
+        <div className="flex w-10 flex-col items-center gap-1">
           <ToolBtn onClick={() => setIconOpen(true)} label="Add Icon">
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
           </ToolBtn>
 
           {/* 1. Selection */}
           <ToolBtn active={active === "select"} onClick={() => onChangeTool("select")} label="Select">
-            <MousePointer2 className="h-5 w-5" />
+            <MousePointer2 className="h-4 w-4" />
           </ToolBtn>
 
           {/* 2. Square */}
@@ -136,7 +110,7 @@ export default function LeftToolbar({
             onClick={() => (onQuickAdd ? onQuickAdd("rect") : onChangeTool("rect"))}
             label="Rectangle"
           >
-            <Square className="h-5 w-5" />
+            <Square className="h-4 w-4" />
           </ToolBtn>
 
           {/* 3. Ellipse */}
@@ -145,15 +119,15 @@ export default function LeftToolbar({
             onClick={() => (onQuickAdd ? onQuickAdd("ellipse") : onChangeTool("ellipse"))}
             label="Ellipse"
           >
-            <Circle className="h-5 w-5" />
+            <Circle className="h-4 w-4" />
           </ToolBtn>
 
           {/* spacer */}
-          <div className="h-2" aria-hidden />
+          <div className="h-1" aria-hidden />
 
           {/* Tag */}
           <ToolBtn onClick={onAddTag} label="Tag">
-            <TagIcon className="h-5 w-5" />
+            <TagIcon className="h-4 w-4" />
           </ToolBtn>
 
           {/* 7. Text */}
@@ -162,33 +136,33 @@ export default function LeftToolbar({
             onClick={() => (onQuickAdd ? onQuickAdd("text") : onChangeTool("text"))}
             label="Text"
           >
-            <Type className="h-5 w-5" />
+            <Type className="h-4 w-4" />
           </ToolBtn>
 
           {/* spacer */}
-          <div className="h-2" aria-hidden />
+          <div className="h-1" aria-hidden />
 
           {/* Hand (pan) */}
           <ToolBtn active={active === "hand"} onClick={() => onChangeTool("hand")} label="Hand">
-            <Hand className="h-5 w-5" />
+            <Hand className="h-4 w-4" />
           </ToolBtn>
 
           {/* Zoom controls */}
           <ToolBtn onClick={onZoomIn} label="Zoom in">
-            <ZoomIn className="h-5 w-5" />
+            <ZoomIn className="h-4 w-4" />
           </ToolBtn>
           <ToolBtn onClick={onZoomOut} label="Zoom out">
-            <ZoomOut className="h-5 w-5" />
+            <ZoomOut className="h-4 w-4" />
           </ToolBtn>
 
-          {/* Undo / Redo / Clear buttons */}
+          {/* Undo / Redo */}
           <ToolBtn
             onClick={() => {
               if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("board:undo"))
             }}
             label="Undo"
           >
-            <Undo2 className="h-5 w-5" />
+            <Undo2 className="h-4 w-4" />
           </ToolBtn>
           <ToolBtn
             onClick={() => {
@@ -196,39 +170,7 @@ export default function LeftToolbar({
             }}
             label="Redo"
           >
-            <Redo2 className="h-5 w-5" />
-          </ToolBtn>
-
-          {/* Clear confirmation dialog */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <ToolBtn label="Clear">
-                <Trash2 className="h-5 w-5" />
-              </ToolBtn>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Clear board?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will remove all nodes and connections from the board. You can still undo this action.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("board:clear"))
-                  }}
-                >
-                  Clear
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Export */}
-          <ToolBtn onClick={onOpenExport} label="Export">
-            <Download className="h-5 w-5" />
+            <Redo2 className="h-4 w-4" />
           </ToolBtn>
         </div>
 
@@ -323,9 +265,7 @@ export default function LeftToolbar({
                             onClick={() => setSelected({ cat: it.cat, name: it.name })}
                             className={cn(
                               "flex aspect-square items-center justify-center rounded border p-1",
-                              isSel
-                                ? "border-teal-600 bg-teal-950/40"
-                                : "border-zinc-800 bg-zinc-200 hover:bg-white",
+                              isSel ? "border-teal-600 bg-teal-950/40" : "border-zinc-800 bg-zinc-200 hover:bg-white",
                             )}
                             title={it.name}
                             aria-pressed={isSel}

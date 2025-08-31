@@ -35,6 +35,18 @@ import {
 } from "./nodes"
 import SmartEdge from "./edges/smart-edge"
 import BoardShortcuts from "./board-shortcuts"
+import { Download, Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type Tool = "select" | "rect" | "ellipse" | "text" | "hand" | "tag"
 
@@ -466,6 +478,47 @@ function BoardInner() {
         onAddIcon={onAddIcon}
         onAddTag={onAddTag}
       />
+
+      <div className="pointer-events-auto absolute right-4 top-4 z-20 flex items-center gap-2">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              aria-label="Clear"
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
+              title="Clear"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear board?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove all nodes and connections from the board. You can still undo this action.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("board:clear"))
+                }}
+              >
+                Clear
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <button
+          aria-label="Export"
+          onClick={() => setExportOpen(true)}
+          className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
+          title="Export"
+        >
+          <Download className="h-4 w-4" />
+        </button>
+      </div>
 
       <div
         ref={boardRef}
