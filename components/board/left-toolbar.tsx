@@ -289,7 +289,7 @@ export default function LeftToolbar({
                 {/* Selected preview */}
                 <div className="rounded-md border border-zinc-800 bg-zinc-950 p-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-16 w-16 items-center justify-center rounded bg-zinc-900">
+                    <div className="flex h-16 w-16 items-center justify-center rounded bg-zinc-200">
                       {selected ? (
                         <img
                           src={selected ? `/vectors/${selected.cat}/${selected.name}.svg` : "/placeholder.svg"}
@@ -325,7 +325,7 @@ export default function LeftToolbar({
                               "flex aspect-square items-center justify-center rounded border p-1",
                               isSel
                                 ? "border-teal-600 bg-teal-950/40"
-                                : "border-zinc-800 bg-zinc-900 hover:bg-zinc-800",
+                                : "border-zinc-800 bg-zinc-200 hover:bg-white",
                             )}
                             title={it.name}
                             aria-pressed={isSel}
