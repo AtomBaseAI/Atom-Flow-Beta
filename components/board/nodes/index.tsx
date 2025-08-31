@@ -302,3 +302,87 @@ export const TextNode = memo(function TextNode({ id, data, selected }: NodeProps
     </div>
   )
 })
+
+export const IconNode = memo(function IconNode({ id, data, selected }: NodeProps<ShapeData & { iconSrc?: string }>) {
+  const [isEditing, setIsEditing] = useState(false)
+  const fill = data.fill ?? "#ffffff"
+  const borderColor = data.borderColor || "#a3a3a3"
+  const iconSrc = data.iconSrc || ""
+
+  return (
+    <div className="group relative h-full w-full p-[3px]">
+      <NodeResizer
+        isVisible={selected && !isEditing}
+        color="#22d3ee"
+        minWidth={72}
+        minHeight={72}
+        lineStyle={{ strokeWidth: 1 }}
+      />
+      <div
+        className="relative flex h-full w-full flex-col overflow-hidden rounded-[2px]"
+        style={{
+          background: fill,
+          borderColor,
+          borderStyle: data.borderStyle || "solid",
+          borderWidth: data.borderWidth ?? 1,
+          boxSizing: "border-box",
+        }}
+      >
+        <div className="flex-1 basis-[75%] min-h-0 flex items-center justify-center p-1">
+          {iconSrc ? (
+            <img
+              src={iconSrc || "/placeholder.svg"}
+              alt="icon"
+              className="max-h-full max-w-full object-contain"
+              style={{ height: "90%", width: "90%" }}
+              draggable={false}
+            />
+          ) : (
+            <div className="text-xs text-neutral-400">No icon</div>
+          )}
+        </div>
+
+        <div className="relative flex-none basis-[25%] min-h-[32px] border-t border-[rgba(0,0,0,0.08)]">
+          <EditableLabel id={id} data={data} align={data.align ?? "center"} onEditingChange={setIsEditing} />
+        </div>
+
+        <Handles visible={!!selected && !isEditing} />
+      </div>
+    </div>
+  )
+})
+
+export const TagNode = memo(function TagNode({ id, data, selected }: NodeProps<ShapeData>) {
+  const [isEditing, setIsEditing] = useState(false)
+  const fill = data.fill ?? "#e5e7eb" // gray background by default
+  const borderColor = data.borderColor || "#a3a3a3"
+
+  return (
+    <div className="group relative h-full w-full p-[3px]">
+      <NodeResizer
+        isVisible={selected && !isEditing}
+        color="#22d3ee"
+        minWidth={48}
+        minHeight={24}
+        lineStyle={{ strokeWidth: 1 }}
+      />
+      <div
+        className="relative h-full w-full overflow-visible rounded-full"
+        style={{
+          background: fill,
+          borderColor,
+          borderStyle: data.borderStyle || "solid",
+          borderWidth: data.borderWidth ?? 1,
+          boxSizing: "border-box",
+        }}
+      >
+        <EditableLabel
+          id={id}
+          data={{ ...data, fontWeight: data.fontWeight ?? 600, fontColor: data.fontColor ?? "#111111" }}
+          align={data.align ?? "center"}
+          onEditingChange={setIsEditing}
+        />
+      </div>
+    </div>
+  )
+})

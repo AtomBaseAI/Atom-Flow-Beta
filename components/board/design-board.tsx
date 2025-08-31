@@ -23,11 +23,20 @@ import "@xyflow/react/dist/style.css"
 
 import LeftToolbar from "./left-toolbar"
 import BottomToolbar from "./bottom-toolbar"
-import { HexagonNode, DiamondNode, TriangleNode, EllipseNode, RectangleNode, TextNode } from "./nodes"
+import {
+  HexagonNode,
+  DiamondNode,
+  TriangleNode,
+  EllipseNode,
+  RectangleNode,
+  TextNode,
+  IconNode,
+  TagNode,
+} from "./nodes"
 import SmartEdge from "./edges/smart-edge"
 import BoardShortcuts from "./board-shortcuts"
 
-type Tool = "select" | "rect" | "ellipse" | "text" | "hand"
+type Tool = "select" | "rect" | "ellipse" | "text" | "hand" | "tag"
 
 export type ShapeData = {
   label?: string
@@ -39,6 +48,7 @@ export type ShapeData = {
   borderColor?: string
   borderStyle?: "solid" | "dashed"
   borderWidth?: number
+  iconSrc?: string
 }
 
 const initialNodes: Node<ShapeData>[] = [
@@ -70,6 +80,8 @@ const nodeTypes: NodeTypes = {
   diamond: DiamondNode,
   hexagon: HexagonNode,
   text: TextNode,
+  icon: IconNode,
+  tag: TagNode,
 }
 
 function BoardInner() {
@@ -89,26 +101,27 @@ function BoardInner() {
   const [exportType, setExportType] = useState<"png" | "svg" | "json">("png")
 
   const quickAdd = useCallback(
-    (t: "rect" | "ellipse" | "text") => {
+    (t: "rect" | "ellipse" | "text" | "tag") => {
       const center = {
         x: typeof window !== "undefined" ? window.innerWidth / 2 : 400,
         y: typeof window !== "undefined" ? window.innerHeight / 2 : 300,
       }
       const pos = rf.screenToFlowPosition(center)
       const id = `n-${Date.now()}`
-      const nodeType = t === "rect" ? "rectangle" : t === "ellipse" ? "ellipse" : "text"
+      const nodeType = t === "rect" ? "rectangle" : t === "ellipse" ? "ellipse" : t === "text" ? "text" : "tag"
       const data: ShapeData = {
         label: "",
-        fill: t === "text" ? "transparent" : "#000000",
-        fontColor: "#ffffff",
+        fill: t === "text" ? "transparent" : t === "tag" ? "#e5e7eb" : "#000000",
+        fontColor: t === "tag" ? "#111111" : "#ffffff",
         fontSize: 8,
-        fontWeight: 400,
+        fontWeight: t === "tag" ? 600 : 400,
         align: t === "text" ? "left" : "center",
         borderColor: "#a3a3a3",
         borderStyle: "solid",
         borderWidth: 1,
       }
-      const style = t === "text" ? { width: 120, height: 28 } : { width: 140, height: 56 }
+      const style =
+        t === "text" ? { width: 120, height: 28 } : t === "tag" ? { width: 96, height: 28 } : { width: 140, height: 56 }
       const newNode: Node<ShapeData> = { id, type: nodeType as any, position: pos, data, style }
       setNodes((nds) => nds.concat(newNode))
       setSelectedNodeId(id)
@@ -164,24 +177,29 @@ function BoardInner() {
     (evt: React.MouseEvent) => {
       const pos = rf.screenToFlowPosition({ x: evt.clientX, y: evt.clientY })
 
-      if (tool === "rect" || tool === "ellipse" || tool === "text") {
+      if (tool === "rect" || tool === "ellipse" || tool === "text" || tool === "tag") {
         const id = `n-${Date.now()}`
         const base: Node<ShapeData> = {
           id,
           position: pos,
           data: {
             label: "",
-            fill: tool === "text" ? "transparent" : "#000000",
-            fontColor: "#ffffff",
+            fill: tool === "text" ? "transparent" : tool === "tag" ? "#e5e7eb" : "#000000",
+            fontColor: tool === "tag" ? "#111111" : "#ffffff",
             fontSize: 8,
-            fontWeight: 400,
+            fontWeight: tool === "tag" ? 600 : 400,
             align: tool === "text" ? "left" : "center",
             borderColor: "#a3a3a3",
             borderStyle: "solid",
             borderWidth: 1,
           },
-          style: tool === "text" ? { width: 120, height: 28 } : { width: 140, height: 56 },
-          type: tool === "rect" ? "rectangle" : tool === "ellipse" ? "ellipse" : "text",
+          style:
+            tool === "text"
+              ? { width: 120, height: 28 }
+              : tool === "tag"
+                ? { width: 96, height: 28 }
+                : { width: 140, height: 56 },
+          type: tool === "rect" ? "rectangle" : tool === "ellipse" ? "ellipse" : tool === "text" ? "text" : "tag",
         }
         setNodes((nds) => nds.concat(base))
         setSelectedNodeId(id)
@@ -374,6 +392,68 @@ function BoardInner() {
     [],
   )
 
+  const onAddIcon = useCallback(
+    ({ src, label }: { src: string; label: string }) => {
+      const center = {
+        x: typeof window !== "undefined" ? window.innerWidth / 2 : 400,
+        y: typeof window !== "undefined" ? window.innerHeight / 2 : 300,
+      }
+      const pos = rf.screenToFlowPosition(center)
+      const id = `n-${Date.now()}`
+      const newNode: Node<ShapeData> = {
+        id,
+        type: "icon" as any,
+        position: pos,
+        data: {
+          label: label || "",
+          iconSrc: src,
+          fill: "#ffffff",
+          fontColor: "#000000",
+          fontSize: 8,
+          fontWeight: 700,
+          align: "center",
+          borderColor: "#a3a3a3",
+          borderStyle: "solid",
+          borderWidth: 1,
+        },
+        style: { width: 96, height: 96 },
+      }
+      setNodes((nds) => nds.concat(newNode))
+      setSelectedNodeId(id)
+      setTool("select")
+    },
+    [rf, setNodes],
+  )
+
+  const onAddTag = useCallback(() => {
+    const center = {
+      x: typeof window !== "undefined" ? window.innerWidth / 2 : 400,
+      y: typeof window !== "undefined" ? window.innerHeight / 2 : 300,
+    }
+    const pos = rf.screenToFlowPosition(center)
+    const id = `n-${Date.now()}`
+    const newNode: Node<ShapeData> = {
+      id,
+      type: "tag" as any,
+      position: pos,
+      data: {
+        label: "tag",
+        fill: "#e5e7eb",
+        fontColor: "#111111",
+        fontSize: 8,
+        fontWeight: 600,
+        align: "center",
+        borderColor: "#a3a3a3",
+        borderStyle: "solid",
+        borderWidth: 1,
+      },
+      style: { width: 96, height: 28 },
+    }
+    setNodes((nds) => nds.concat(newNode))
+    setSelectedNodeId(id)
+    setTool("select")
+  }, [rf, setNodes])
+
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden">
       <LeftToolbar
@@ -383,6 +463,8 @@ function BoardInner() {
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onOpenExport={() => setExportOpen(true)}
+        onAddIcon={onAddIcon}
+        onAddTag={onAddTag}
       />
 
       <div
