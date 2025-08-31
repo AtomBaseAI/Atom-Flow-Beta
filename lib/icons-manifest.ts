@@ -1,8 +1,24 @@
-export const ICON_CATEGORIES = ["all", "tech", "aws"] as const
+export const ICON_CATEGORIES = ["all","lang", "tech", "aws"] as const
 
 // Keep filenames in sync with /public/vectors structure.
 // You can add more here later without changing any code.
 export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, string[]> = {
+  lang:[
+    "c",
+    "cpp",
+    "csharp",
+    "dart",
+    "go",
+    "java",
+    "js",
+    "json",
+    "php",
+    "python",
+    "ruby",
+    "typescript",
+    "sql"
+  ],
+
   tech: [
     "angular",
     "api",
@@ -10,11 +26,7 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
     "auth0",
     "aws",
     "azure",
-    "c",
     "chrome",
-    "cpp",
-    "csharp",
-    "dart",
     "desktop",
     "django",
     "email",
@@ -25,10 +37,6 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
     "flutter",
     "gcp",
     "gmail",
-    "go",
-    "java",
-    "js",
-    "json",
     "jwt",
     "key",
     "mobile",
@@ -38,18 +46,16 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
     "node",
     "oracle",
     "pdf",
-    "php",
     "postgresql",
-    "python",
-    "react",
-    "ruby",
+    "react-lib",
     "spring",
-    "sql",
     "table",
     "typescript",
     "vscode",
     "web"
 
   ],
-  aws: ["ebs", "ec2", "lambda"],
+  aws: ["ebs", 
+    "ec2", 
+    "lambda"],
 }
