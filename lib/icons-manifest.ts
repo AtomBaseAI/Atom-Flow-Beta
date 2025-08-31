@@ -27,6 +27,7 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
     "node",
     "react-lib",
     "spring",
+    "vue"
   ],
   testing: [
     "cucumber-bdd",
@@ -80,6 +81,8 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
    "excel",
    "ppt",
    "word",
+   "animate",
+   "after-effects",
    "photoshop",
    "illustrator",
    "lightroom",
@@ -93,6 +96,7 @@ export const ICONS: Record<Exclude<(typeof ICON_CATEGORIES)[number], "all">, str
     "desktop",
     "email",
     "gmail",
+    "insomnia",
     "jwt",
     "key",
     "mobile",
